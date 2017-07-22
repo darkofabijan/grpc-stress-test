@@ -10,7 +10,7 @@ require 'helloworld_services_pb'
 def main
   stub = Helloworld::Greeter::Stub.new('localhost:50051', :this_channel_is_insecure)
   user = ARGV.size > 0 ?  ARGV[0] : 'world'
-  (1..1_000_000).each do |x|
+  (1..100_000).each do |x|
     p x
     message = stub.say_hello(Helloworld::HelloRequest.new(name: x.to_s)).message
     p "Greeting: #{message}"
