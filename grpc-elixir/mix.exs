@@ -31,7 +31,9 @@ defmodule GRPC.Mixfile do
      # TODO
      # https://github.com/joedevivo/chatterbox/issues/57
      # https://github.com/joedevivo/chatterbox/issues/93
-     {:chatterbox, github: "tony612/chatterbox", branch: "ignore-unknown-setting-frame"},
+     # https://github.com/joedevivo/chatterbox/pull/114
+     # https://github.com/joedevivo/chatterbox/pull/115
+     {:chatterbox, github: "tony612/chatterbox", branch: "my-fix"},
      # TODO
      # https://github.com/ninenines/cowboy/pull/1020
 		 # https://github.com/ninenines/cowboy/pull/1068
