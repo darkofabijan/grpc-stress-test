@@ -65,9 +65,16 @@ defmodule GRPC.Adapter.Chatterbox.Client do
   def recv_end(%{payload: %{stream_id: stream_id}, channel: channel}, opts) do
     receive do
       {:END_STREAM, ^stream_id} ->
+        IO.puts "Got END_STREAM"
         channel |> get_active_pname |> :h2_client.get_response(stream_id)
-    after timeout(opts) ->
+      something ->
+        IO.puts "got something else"
+        IO.inspect something
+    after 3000 ->
       # TODO: test
+      res = channel |> get_active_pname |> :h2_client.get_response(stream_id)
+      IO.puts "RESSS"
+      IO.inspect res
       raise GRPC.TimeoutError
     end
   end
