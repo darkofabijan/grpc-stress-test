@@ -16,7 +16,7 @@ defmodule Helloworld.Mixfile do
   end
 
   defp deps do
-    # [{:grpc, path: "../../"}]
-    [{:grpc, github: "tony612/grpc-elixir"}]
+    [{:grpc, path: "../../"}]
+    # [{:grpc, github: "tony612/grpc-elixir"}]
   end
 end
