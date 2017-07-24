@@ -43,7 +43,7 @@ defmodule GRPC.Adapter.Chatterbox.Client do
 
   @spec send_request(GRPC.Client.Stream.t, struct, keyword) :: struct
   def send_request(stream, message, opts) do
-    Watchman.benchmark("chatterbox.unary.send_request", fn ->
+    Watchman.benchmark("chatterbox.send_request.duration", fn ->
       opts = Keyword.put(opts, :send_end_stream, true)
       {:ok, stream} = send_header(stream, opts)
       send_body(stream, message, opts)
@@ -69,7 +69,7 @@ defmodule GRPC.Adapter.Chatterbox.Client do
 
   @spec recv_end(GRPC.Client.Stream.t, keyword) :: any
   def recv_end(%{payload: %{stream_id: stream_id}, channel: channel}, opts) do
-    Watchman.benchmark("chatterbox.unary.recv_end", fn ->
+    Watchman.benchmark("chatterbox.recv_end.duration", fn ->
       receive do
         {:END_STREAM, ^stream_id} ->
           channel |> get_active_pname |> :h2_client.get_response(stream_id)
