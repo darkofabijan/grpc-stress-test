@@ -23,7 +23,7 @@ defmodule GRPC.Mixfile do
   #
   # Type "mix help compile.app" for more information
   def application do
-    [applications: [:lager, :logger, :exprotobuf, :chatterbox, :cowboy]]
+    [applications: [:lager, :logger, :exprotobuf, :chatterbox, :cowboy, :watchman]]
   end
 
   defp deps do
