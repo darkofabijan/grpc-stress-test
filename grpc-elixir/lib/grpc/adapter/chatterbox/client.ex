@@ -6,6 +6,8 @@ defmodule GRPC.Adapter.Chatterbox.Client do
   it will try to reconnect before sending a request.
   """
 
+  use Watchman.Benchmark
+
   @spec connect(map, map) :: {:ok, any} | {:error, any}
   def connect(%{host: host, port: port}, payload = %{cred: nil}) do
     pname = :"grpc_chatter_client_#{host}:#{port}"
@@ -33,8 +35,10 @@ defmodule GRPC.Adapter.Chatterbox.Client do
 
   @spec unary(GRPC.Client.Stream.t, struct, keyword) :: struct
   def unary(stream, message, opts) do
-    {:ok, stream} = send_request(stream, message, opts)
-    recv_end(stream, opts)
+    Watchman.benchmark("chatterbox.unary.duration", fn ->
+      {:ok, stream} = send_request(stream, message, opts)
+      recv_end(stream, opts)
+    end)
   end
 
   @spec send_request(GRPC.Client.Stream.t, struct, keyword) :: struct
