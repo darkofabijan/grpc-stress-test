@@ -70,6 +70,11 @@ defmodule GRPC.Adapter.Chatterbox.Client do
   @spec recv_end(GRPC.Client.Stream.t, keyword) :: any
   def recv_end(%{payload: %{stream_id: stream_id}, channel: channel}, opts) do
     Watchman.benchmark("chatterbox.recv_end.duration", fn ->
+
+      {:message_queue_len, messages} = :erlang.process_info(self(), :message_queue_len)
+
+      Watchman.submit("chatterbox.recv_end.message_box_size", messages)
+
       receive do
         {:END_STREAM, ^stream_id} ->
           channel |> get_active_pname |> :h2_client.get_response(stream_id)
