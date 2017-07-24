@@ -43,10 +43,12 @@ defmodule GRPC.Adapter.Chatterbox.Client do
 
   @spec send_request(GRPC.Client.Stream.t, struct, keyword) :: struct
   def send_request(stream, message, opts) do
-    opts = Keyword.put(opts, :send_end_stream, true)
-    {:ok, stream} = send_header(stream, opts)
-    send_body(stream, message, opts)
-    {:ok, stream}
+    Watchman.benchmark("chatterbox.unary.send_request", fn ->
+      opts = Keyword.put(opts, :send_end_stream, true)
+      {:ok, stream} = send_header(stream, opts)
+      send_body(stream, message, opts)
+      {:ok, stream}
+    end)
   end
 
   @spec send_header(GRPC.Client.Stream.t, keyword) :: {:ok, GRPC.Client.Stream.t}
@@ -67,16 +69,18 @@ defmodule GRPC.Adapter.Chatterbox.Client do
 
   @spec recv_end(GRPC.Client.Stream.t, keyword) :: any
   def recv_end(%{payload: %{stream_id: stream_id}, channel: channel}, opts) do
-    receive do
-      {:END_STREAM, ^stream_id} ->
-        channel |> get_active_pname |> :h2_client.get_response(stream_id)
-    after 3000 ->
-      # TODO: test
-      res = channel |> get_active_pname |> :h2_client.get_response(stream_id)
-      IO.puts "RESSS"
-      IO.inspect res
-      raise GRPC.TimeoutError
-    end
+    Watchman.benchmark("chatterbox.unary.recv_end", fn ->
+      receive do
+        {:END_STREAM, ^stream_id} ->
+          channel |> get_active_pname |> :h2_client.get_response(stream_id)
+      after 3000 ->
+        # TODO: test
+        res = channel |> get_active_pname |> :h2_client.get_response(stream_id)
+        IO.puts "RESSS"
+        IO.inspect res
+        raise GRPC.TimeoutError
+      end
+    end)
   end
 
   @spec recv(GRPC.Client.Stream.t, keyword) :: {:end_stream, any} | {:data, binary}
