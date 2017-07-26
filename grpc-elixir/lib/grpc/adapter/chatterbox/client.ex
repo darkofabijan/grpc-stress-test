@@ -6,6 +6,8 @@ defmodule GRPC.Adapter.Chatterbox.Client do
   it will try to reconnect before sending a request.
   """
 
+  use Watchman.Benchmark
+
   @spec connect(map, map) :: {:ok, any} | {:error, any}
   def connect(%{host: host, port: port}, payload = %{cred: nil}) do
     pname = :"grpc_chatter_client_#{host}:#{port}"
@@ -33,16 +35,20 @@ defmodule GRPC.Adapter.Chatterbox.Client do
 
   @spec unary(GRPC.Client.Stream.t, struct, keyword) :: struct
   def unary(stream, message, opts) do
-    {:ok, stream} = send_request(stream, message, opts)
-    recv_end(stream, opts)
+    Watchman.benchmark("chatterbox.unary.duration", fn ->
+      {:ok, stream} = send_request(stream, message, opts)
+      recv_end(stream, opts)
+    end)
   end
 
   @spec send_request(GRPC.Client.Stream.t, struct, keyword) :: struct
   def send_request(stream, message, opts) do
-    opts = Keyword.put(opts, :send_end_stream, true)
-    {:ok, stream} = send_header(stream, opts)
-    send_body(stream, message, opts)
-    {:ok, stream}
+    Watchman.benchmark("chatterbox.send_request.duration", fn ->
+      opts = Keyword.put(opts, :send_end_stream, true)
+      {:ok, stream} = send_header(stream, opts)
+      send_body(stream, message, opts)
+      {:ok, stream}
+    end)
   end
 
   @spec send_header(GRPC.Client.Stream.t, keyword) :: {:ok, GRPC.Client.Stream.t}
@@ -63,16 +69,23 @@ defmodule GRPC.Adapter.Chatterbox.Client do
 
   @spec recv_end(GRPC.Client.Stream.t, keyword) :: any
   def recv_end(%{payload: %{stream_id: stream_id}, channel: channel}, opts) do
-    receive do
-      {:END_STREAM, ^stream_id} ->
-        channel |> get_active_pname |> :h2_client.get_response(stream_id)
-    after 3000 ->
-      # TODO: test
-      res = channel |> get_active_pname |> :h2_client.get_response(stream_id)
-      IO.puts "RESSS"
-      IO.inspect res
-      raise GRPC.TimeoutError
-    end
+    Watchman.benchmark("chatterbox.recv_end.duration", fn ->
+
+      {:message_queue_len, messages} = :erlang.process_info(self(), :message_queue_len)
+
+      Watchman.submit("chatterbox.recv_end.message_box_size", messages)
+
+      receive do
+        {:END_STREAM, ^stream_id} ->
+          channel |> get_active_pname |> :h2_client.get_response(stream_id)
+      after 3000 ->
+        # TODO: test
+        res = channel |> get_active_pname |> :h2_client.get_response(stream_id)
+        IO.puts "RESSS"
+        IO.inspect res
+        raise GRPC.TimeoutError
+      end
+    end)
   end
 
   @spec recv(GRPC.Client.Stream.t, keyword) :: {:end_stream, any} | {:data, binary}
