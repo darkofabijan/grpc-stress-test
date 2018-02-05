@@ -19,38 +19,45 @@
 package main
 
 import (
-  "log"
-  "os"
+	"flag"
+	"log"
+	"os"
 
-  "golang.org/x/net/context"
-  "google.golang.org/grpc"
-  pb "google.golang.org/grpc/examples/helloworld/helloworld"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc"
+	pb "google.golang.org/grpc/examples/helloworld/helloworld"
 )
 
 const (
-  address     = "localhost:50051"
-  defaultName = "world"
+	address     = "localhost:50051"
+	defaultName = "world"
 )
 
-func main() {
-  // Set up a connection to the server.
-  conn, err := grpc.Dial(address, grpc.WithInsecure())
-  if err != nil {
-    log.Fatalf("did not connect: %v", err)
-  }
-  defer conn.Close()
-  c := pb.NewGreeterClient(conn)
+var debug = flag.Bool("debug", false, "output debug log")
 
-  // Contact the server and print out its response.
-  name := defaultName
-  if len(os.Args) > 1 {
-    name = os.Args[1]
-  }
-  for i := 0; i < 100000; i++ {
-    r, err := c.SayHello(context.Background(), &pb.HelloRequest{Name: name})
-    if err != nil {
-      log.Fatalf("could not greet: %v", err)
-    }
-    log.Printf("Greeting: %s – %d", r.Message, i)
-  }
+func main() {
+	flag.Parse()
+
+	// Set up a connection to the server.
+	conn, err := grpc.Dial(address, grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+	defer conn.Close()
+	c := pb.NewGreeterClient(conn)
+
+	// Contact the server and print out its response.
+	name := defaultName
+	if len(os.Args) > 1 {
+		name = os.Args[1]
+	}
+	for i := 0; i < 100000; i++ {
+		r, err := c.SayHello(context.Background(), &pb.HelloRequest{Name: name})
+		if err != nil {
+			log.Fatalf("could not greet: %v", err)
+		}
+		if *debug {
+			log.Printf("Greeting: %s – %d", r.Message, i)
+		}
+	}
 }
